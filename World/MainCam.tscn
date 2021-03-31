@@ -1,0 +1,5 @@
+[gd_scene format=2]
+
+[node name="MainCam" type="Camera2D"]
+position = Vector2( 516.122, 302.454 )
+current = true
