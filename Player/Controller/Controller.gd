@@ -2,13 +2,15 @@ extends Node2D
 
 signal click
 signal destination_click
-signal validate_moves
+signal move_pattern_selected
 
 const gp = 28
 
 var indicator_move = preload("res://Common/IndicatorMove.tscn")
 var indicator = preload("res://Common/Indicator.tscn")
-var moveIndicator 
+var movePatterns = preload("res://Common/MovePattern.tscn")
+var iMovePatterns
+var moveIndicator
 var selectedUnit
 var movementIndicator
 var indicatorParent
@@ -17,7 +19,7 @@ var validatedMoves
 
 
 func _ready():
-	pass
+	iMovePatterns = movePatterns.instance()
 	
 func _process(delta):
 	if (Input.is_action_just_pressed("click")):
@@ -27,7 +29,9 @@ func _process(delta):
 		
 func handle_left_click():
 	var mPos = p_to_g(get_global_mouse_position())
-	if (indicatorParent == null):
+	print("indicatorParent:", indicatorParent)
+	print("is instance valid: ", is_instance_valid(indicatorParent))
+	if (indicatorParent == null || !is_instance_valid(indicatorParent)):
 		emit_signal("click", mPos)
 	else:
 		if (mPos == selectedUnit.gridPos):
@@ -86,47 +90,30 @@ func true_pos(pos):
 ##
 
 
-func _on_valid_moves_received(moves):
+func on_valid_moves_received(moves):
 	validatedMoves = moves
 	for move in validatedMoves:
 		indicatorParent.add_child(move)
-		#print(get_children())
-		#move.add_child(move)
 	add_child(indicatorParent)
 	
-func _on_player_unit_selected(unit):
+func on_player_unit_selected(unit):
 	movesToValidate = []
 	selectedUnit = unit
 	selectedUnit.get_node("AnimationPlayer").play("Selected")
 	indicatorParent = indicator.instance()
 	indicatorParent.name = "IndicatorParent"
 	indicatorParent.add_to_group("indicator")
-	for i in 5:
-		var m = indicator_move.instance()
-		m.add_to_group("indicator")
-		m.position = gridUp(unit.gridPos, i)
-		#indicatorParent.add_child(m)
-		movesToValidate.append(m)
-		#add_child(indicatorParent)
-	for i in 5:
-		var m = indicator_move.instance()
-		m.add_to_group("indicator")
-		m.position = gridDown(unit.gridPos, i)
-		#indicatorParent.add_child(m)
-		movesToValidate.append(m)
-	for i in 5:
-		var m = indicator_move.instance()
-		m.add_to_group("indicator")
-		m.position = gridLeft(unit.gridPos, i)
-		#indicatorParent.add_child(m)
-		movesToValidate.append(m)
-	for i in 5:
-		var m = indicator_move.instance()
-		m.add_to_group("indicator")
-		m.position = gridRight(unit.gridPos, i)
-		#indicatorParent.add_child(m)
-		movesToValidate.append(m)
-	emit_signal("validate_moves", movesToValidate)
+	var movePattern
+	if selectedUnit.name == "Penguin":
+		print("Knight move!")
+		movePattern = iMovePatterns.right(selectedUnit)
+	elif selectedUnit.name == "Bear":
+		print("Rook move!")
+		movePattern = iMovePatterns.bishop(selectedUnit)
+		
+	emit_signal("move_pattern_selected", movePattern)
+	
+	
 func gridRight(pos: Vector2, i: int):
 	return Vector2(pos.x*64+64*i+64, pos.y*64)
 

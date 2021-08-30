@@ -15,8 +15,6 @@ var enemy_units = []
 ##
 signal player_unit_selected
 
-signal moves_checked
-
 func _ready():
 	init_board()
 	for cell in cells:
@@ -31,7 +29,23 @@ func _ready():
 	player_units[unitXpos][unitYpos] = cells[rand_num].unit
 	unit.gridPos = Vector2(unitXpos, unitYpos)
 	unit.name = "Penguin"
+	unit.actionDirections["SouthWest"] = true
+	unit.actionDirections["SouthEast"] = true
 	add_child(unit)
+	
+	unit = res_unit_player.instance()
+	randomize()
+	rand_num = 35#rand_range(0, 24)
+	cells[rand_num].unit = unit
+	cells[rand_num].unit.position = cells[rand_num].position
+	unitXpos = pixel_to_grid(cells[rand_num].position).x
+	unitYpos = pixel_to_grid(cells[rand_num].position).y
+	player_units[unitXpos][unitYpos] = cells[rand_num].unit
+	unit.gridPos = Vector2(unitXpos, unitYpos)
+	unit.name = "Bear"
+	unit.actionDirections["South"] = true
+	add_child(unit)
+	
 	unit = res_unit_enemy.instance()
 	randomize()
 	rand_num = 24#rand_range(0, 24)
@@ -115,13 +129,12 @@ func handle_player_unit_clicked(pos):
 ##
 # RECIEVERS
 #
-func _on_click(pos: Vector2):
+func on_click(pos: Vector2):
 	if (player_units[pos.x][pos.y] != null):
 		handle_player_unit_clicked(pos)
 
-func _on_destination_click(from: Vector2, to: Vector2):
-	print("from:", from)
-	print("to: ", to)
+func on_destination_click(from: Vector2, to: Vector2):
+	print("from:", from, "to: ", to)
 	var unitToMove = player_units[from.x][from.y]
 	print(unitToMove.name, " will be moved")
 	unitToMove.position = grid_to_pixel(to)
@@ -129,14 +142,22 @@ func _on_destination_click(from: Vector2, to: Vector2):
 	player_units[to.x][to.y] = unitToMove
 	player_units[from.x][from.y] = null
 	
-func _on_validate_moves(moves):
+func on_validate_moves(moves):
 	var validMoves = []
+	var invalidDirections = []
 	for move in moves:
-		var pos = pixel_to_grid(move.position)
-		if (pos.x < 10 && pos.x >= 0 && pos.y <= 9 && pos.y >= 0 
-		&& player_units[pos.x][pos.y] == null):
-			validMoves.append(move)
-	emit_signal("moves_checked", validMoves)
+		print("Validating move: ", pixel_to_grid(move.position), move.direction)
+		if !invalidDirections.has(move.direction):
+			if is_instance_valid(move):
+				var pos = pixel_to_grid(move.position)
+				if (pos.x < 10 && pos.x >= 0 && pos.y <= 9 && pos.y >= 0 && player_units[pos.x][pos.y] == null && enemy_units[pos.x][pos.y] == null):
+					validMoves.append(move)
+					print("move VALID: ", pixel_to_grid(move.position), move.direction)
+				else:
+					invalidDirections.append(move.direction)
+					print("move NOT VALID: ", pixel_to_grid(move.position), move.direction)
+	return validMoves
+
 
 ##
 # Coord transformations

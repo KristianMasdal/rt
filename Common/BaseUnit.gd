@@ -6,6 +6,16 @@ export var movement: int
 export var atk: int
 export var posX: int
 export var posY: int
+export var actionDirections = {
+	"North": false, 
+	"NorthEast": false,
+	"East": false,
+	"SouthEast": false,
+	"South": false,
+	"SouthWest": false,
+	"West": false,
+	"NorthWest": false,
+}
 var gridPos: Vector2
 var type = "Penguin"
 
